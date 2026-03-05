@@ -1,0 +1,18 @@
+stages:
+  prepare:
+    cmd: python src/prepare.py data/raw/dataset.csv data/prepared
+    deps:
+      - data/raw/dataset.csv
+      - src/prepare.py
+    outs:
+      - data/prepared
+
+  train:
+    # Тут ми використовуємо змінні з params.yaml через конструкцію ${...}
+    cmd: python src/train.py --input_dir data/prepared --C ${train.C} --max_features ${train.max_features}
+    deps:
+      - data/prepared
+      - src/train.py
+    params:
+      - train.C
+      - train.max_features
