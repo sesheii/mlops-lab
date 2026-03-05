@@ -8,7 +8,6 @@ stages:
       - data/prepared
 
   train:
-    # Тут ми використовуємо змінні з params.yaml через конструкцію ${...}
     cmd: python src/train.py --input_dir data/prepared --C ${train.C} --max_features ${train.max_features}
     deps:
       - data/prepared

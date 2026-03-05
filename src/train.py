@@ -112,6 +112,7 @@ def main(args):
 
 
 if __name__ == "__main__":
+    print("hello")
     parser = argparse.ArgumentParser(description="Train Sentiment Analysis Model")
 
     parser.add_argument(
