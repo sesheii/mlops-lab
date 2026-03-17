@@ -12,16 +12,16 @@ stages:
       md5: aa0a506a22a29ef78dcf239613fe21a6
       size: 2005
     outs:
-    - path: data/prepared
+    - path: data/processed
       hash: md5
       md5: 59ae4f271f1d877e78f590b0e89b7045.dir
       size: 36250629
       nfiles: 2
   train:
-    cmd: python src/train.py --input_dir data/prepared --C 1.0 --max_features 
+    cmd: python src/train.py --input_dir data/processed --C 1.0 --max_features 
       5000
     deps:
-    - path: data/prepared
+    - path: data/processed
       hash: md5
       md5: 59ae4f271f1d877e78f590b0e89b7045.dir
       size: 36250629

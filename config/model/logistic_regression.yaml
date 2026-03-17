@@ -1,0 +1,2 @@
+type: "logistic_regression"
+max_iter: 500

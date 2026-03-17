@@ -1,0 +1,24 @@
+defaults:
+  - model: logistic_regression
+  - hpo: optuna
+  - _self_
+
+seed: 42
+mlflow:
+  tracking_uri: "http://127.0.0.1:5000"
+  experiment_name: "IMDB_HPO_Lab3"
+  register_model: true
+  model_name: "IMDB_Sentiment"
+  stage: "Staging"
+
+data:
+  train_path: "data/prepared/train.csv"
+  test_path: "data/prepared/test.csv"
+
+hydra:
+  run:
+    dir: .
+  output_subdir: null
+
+hpo:
+  cv_folds: 5
