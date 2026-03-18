@@ -1,5 +1,5 @@
 sampler: "grid"
-n_trials: 50
+n_trials: 20
 metric: "f1"
 direction: "maximize"
 
