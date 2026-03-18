@@ -26,18 +26,22 @@ def set_global_seed(seed: int):
 
 def objective_factory(cfg: DictConfig, X, y):
     def objective(trial: optuna.Trial) -> float:
-        c_val = trial.suggest_float(
-            "C", 
-            cfg.hpo.search_space.C.low, 
-            cfg.hpo.search_space.C.high, 
-            log=True
-        )
-        max_feat = trial.suggest_int(
-            "max_features", 
-            cfg.hpo.search_space.max_features.low, 
-            cfg.hpo.search_space.max_features.high, 
-            step=cfg.hpo.search_space.max_features.step
-        )
+        if cfg.hpo.sampler == "grid":
+            c_val = trial.suggest_categorical("C", list(cfg.hpo.search_space.C))
+            max_feat = trial.suggest_categorical("max_features", list(cfg.hpo.search_space.max_features))
+        else:
+            c_val = trial.suggest_float(
+                "C", 
+                cfg.hpo.search_space.C.low, 
+                cfg.hpo.search_space.C.high, 
+                log=True
+            )
+            max_feat = trial.suggest_int(
+                "max_features", 
+                cfg.hpo.search_space.max_features.low, 
+                cfg.hpo.search_space.max_features.high, 
+                step=cfg.hpo.search_space.max_features.step
+            )
         ngram_str = trial.suggest_categorical(
             "ngram_range", 
             list(cfg.hpo.search_space.ngram_range)
