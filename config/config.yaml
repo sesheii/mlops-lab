@@ -12,8 +12,8 @@ mlflow:
   stage: "Staging"
 
 data:
-  train_path: "data/prepared/train.csv"
-  test_path: "data/prepared/test.csv"
+  train_path: "data/processed/train.csv"
+  test_path: "data/processed/test.csv"
 
 hydra:
   run:
