@@ -6,3 +6,4 @@ models/
 .ipynb_checkpoints
 mlruns/
 .trash/
+optimize.log

@@ -1,19 +1,17 @@
-import os
-import json
 import random
 import numpy as np
 import pandas as pd
 import optuna
 import mlflow
 import mlflow.sklearn
-import joblib
 from mlflow.tracking import MlflowClient
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import f1_score
-from sklearn.model_selection import StratifiedKFold, train_test_split
+from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import Pipeline
 from sklearn.base import clone
+import subprocess
 
 import hydra._internal.utils
 hydra._internal.utils.LazyCompletionHelp = str
@@ -23,6 +21,13 @@ from omegaconf import DictConfig, OmegaConf
 def set_global_seed(seed: int):
     random.seed(seed)
     np.random.seed(seed)
+
+def get_git_commit():
+    try:
+        commit = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("utf-8").strip()
+        return commit
+    except Exception:
+        return "unknown"
 
 def objective_factory(cfg: DictConfig, X, y):
     def objective(trial: optuna.Trial) -> float:
@@ -115,6 +120,9 @@ def main(cfg: DictConfig):
     with mlflow.start_run(run_name=f"HPO_{cfg.hpo.sampler}") as parent_run:
         mlflow.set_tag("optimization", "optuna")
         mlflow.log_dict(OmegaConf.to_container(cfg, resolve=True), "config.json")
+        
+        commit_hash = get_git_commit()
+        mlflow.set_tag("mlflow.source.git.commit", commit_hash)
 
         study = optuna.create_study(direction=cfg.hpo.direction, sampler=sampler)
         
@@ -126,9 +134,7 @@ def main(cfg: DictConfig):
         mlflow.log_metric(f"best_cv_{cfg.hpo.metric}", best_trial.value)
         mlflow.log_params({f"best_{k}": v for k, v in best_trial.params.items()})
 
-        with open("best_params.json", "w") as f:
-            json.dump(best_trial.params, f)
-        mlflow.log_artifact("best_params.json")
+        mlflow.log_dict(best_trial.params, "best_params.json")
 
         best_ngram_tuple = tuple(map(int, best_trial.params["ngram_range"].split(",")))
 
@@ -143,16 +149,13 @@ def main(cfg: DictConfig):
         
         mlflow.log_metric(f"final_test_{cfg.hpo.metric}", final_test_score)
 
-        os.makedirs("models", exist_ok=True)
-        joblib.dump(best_pipeline, "models/best_model.pkl")
-        mlflow.log_artifact("models/best_model.pkl")
-
         artifact_path = "model"
         mlflow.sklearn.log_model(best_pipeline, artifact_path)
         
-        if cfg.mlflow.get("register_model", True):
+        if cfg.mlflow.get("register_model", False):
             model_uri = f"runs:/{parent_run.info.run_id}/{artifact_path}"
-            model_name = cfg.mlflow.get("model_name", "IMDB_Sentiment_Model")
+            
+            model_name = cfg.mlflow.model_name 
             
             mv = mlflow.register_model(model_uri, model_name)
             
