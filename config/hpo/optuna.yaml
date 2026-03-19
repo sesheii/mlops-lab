@@ -4,11 +4,20 @@ metric: "f1"
 direction: "maximize"
 
 search_space:
-  C:
-    low: 1.0e-3
-    high: 1.0e2
-  max_features:
-    low: 1000
-    high: 20000
-    step: 500
-  ngram_range: ["1,1", "1,2"]
+  tfidf:
+    max_features:
+      low: 1000
+      high: 20000
+      step: 500
+    ngram_range: ["1,1", "1,2"]
+  logistic_regression:
+    C:
+      low: 1.0e-3
+      high: 1.0e2
+  random_forest:
+    n_estimators:
+      low: 50
+      high: 300
+    max_depth:
+      low: 5
+      high: 20

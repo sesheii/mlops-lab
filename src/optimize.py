@@ -7,6 +7,7 @@ import mlflow.sklearn
 from mlflow.tracking import MlflowClient
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import f1_score
 from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import Pipeline
@@ -32,26 +33,55 @@ def get_git_commit():
 def objective_factory(cfg: DictConfig, X, y):
     def objective(trial: optuna.Trial) -> float:
         if cfg.hpo.sampler == "grid":
-            c_val = trial.suggest_categorical("C", list(cfg.hpo.search_space.C))
-            max_feat = trial.suggest_categorical("max_features", list(cfg.hpo.search_space.max_features))
+            max_feat = trial.suggest_categorical("max_features", list(cfg.hpo.search_space.tfidf.max_features))
         else:
-            c_val = trial.suggest_float(
-                "C", 
-                cfg.hpo.search_space.C.low, 
-                cfg.hpo.search_space.C.high, 
-                log=True
-            )
             max_feat = trial.suggest_int(
                 "max_features", 
-                cfg.hpo.search_space.max_features.low, 
-                cfg.hpo.search_space.max_features.high, 
-                step=cfg.hpo.search_space.max_features.step
+                cfg.hpo.search_space.tfidf.max_features.low, 
+                cfg.hpo.search_space.tfidf.max_features.high, 
+                step=cfg.hpo.search_space.tfidf.max_features.step
             )
         ngram_str = trial.suggest_categorical(
             "ngram_range", 
-            list(cfg.hpo.search_space.ngram_range)
+            list(cfg.hpo.search_space.tfidf.ngram_range)
         )
         ngram_tuple = tuple(map(int, ngram_str.split(",")))
+
+        params = {"max_features": max_feat, "ngram_range": ngram_str}
+
+        if cfg.model.type == "logistic_regression":
+            if cfg.hpo.sampler == "grid":
+                c_val = trial.suggest_categorical("C", list(cfg.hpo.search_space.logistic_regression.C))
+            else:
+                c_val = trial.suggest_float(
+                    "C", 
+                    cfg.hpo.search_space.logistic_regression.C.low, 
+                    cfg.hpo.search_space.logistic_regression.C.high, 
+                    log=True
+                )
+            params["C"] = c_val
+            clf = LogisticRegression(C=c_val, max_iter=cfg.model.get("max_iter", 500), random_state=cfg.seed)
+
+        elif cfg.model.type == "random_forest":
+            if cfg.hpo.sampler == "grid":
+                n_est = trial.suggest_categorical("n_estimators", list(cfg.hpo.search_space.random_forest.n_estimators))
+                m_depth = trial.suggest_categorical("max_depth", list(cfg.hpo.search_space.random_forest.max_depth))
+            else:
+                n_est = trial.suggest_int(
+                    "n_estimators", 
+                    cfg.hpo.search_space.random_forest.n_estimators.low, 
+                    cfg.hpo.search_space.random_forest.n_estimators.high
+                )
+                m_depth = trial.suggest_int(
+                    "max_depth", 
+                    cfg.hpo.search_space.random_forest.max_depth.low, 
+                    cfg.hpo.search_space.random_forest.max_depth.high
+                )
+            params["n_estimators"] = n_est
+            params["max_depth"] = m_depth
+            clf = RandomForestClassifier(n_estimators=n_est, max_depth=m_depth, random_state=cfg.seed, n_jobs=-1)
+        else:
+            raise ValueError(f"Unknown model.type: {cfg.model.type}")
 
         with mlflow.start_run(nested=True, run_name=f"trial_{trial.number:03d}"):
             mlflow.set_tag("trial_number", trial.number)
@@ -59,12 +89,11 @@ def objective_factory(cfg: DictConfig, X, y):
             mlflow.set_tag("sampler", cfg.hpo.sampler)
             mlflow.set_tag("seed", cfg.seed)
             
-            params = {"C": c_val, "max_features": max_feat, "ngram_range": ngram_str}
             mlflow.log_params(params)
 
             base_pipeline = Pipeline([
                 ("tfidf", TfidfVectorizer(max_features=max_feat, ngram_range=ngram_tuple)),
-                ("clf", LogisticRegression(C=c_val, max_iter=cfg.model.max_iter, random_state=cfg.seed))
+                ("clf", clf)
             ])
 
             cv = StratifiedKFold(n_splits=cfg.hpo.cv_folds, shuffle=True, random_state=cfg.seed)
@@ -109,15 +138,20 @@ def main(cfg: DictConfig):
         sampler = optuna.samplers.RandomSampler(seed=cfg.seed)
     elif cfg.hpo.sampler == "grid":
         grid_space = {
-            "C": list(cfg.hpo.search_space.C),
-            "max_features": list(cfg.hpo.search_space.max_features),
-            "ngram_range": list(cfg.hpo.search_space.ngram_range)
+            "max_features": list(cfg.hpo.search_space.tfidf.max_features),
+            "ngram_range": list(cfg.hpo.search_space.tfidf.ngram_range)
         }
+        if cfg.model.type == "logistic_regression":
+            grid_space["C"] = list(cfg.hpo.search_space.logistic_regression.C)
+        elif cfg.model.type == "random_forest":
+            grid_space["n_estimators"] = list(cfg.hpo.search_space.random_forest.n_estimators)
+            grid_space["max_depth"] = list(cfg.hpo.search_space.random_forest.max_depth)
+            
         sampler = optuna.samplers.GridSampler(search_space=grid_space)
     else:
         sampler = optuna.samplers.TPESampler(seed=cfg.seed)
 
-    with mlflow.start_run(run_name=f"HPO_{cfg.hpo.sampler}") as parent_run:
+    with mlflow.start_run(run_name=f"HPO_{cfg.hpo.sampler}_{cfg.model.type}") as parent_run:
         mlflow.set_tag("optimization", "optuna")
         mlflow.log_dict(OmegaConf.to_container(cfg, resolve=True), "config.json")
         
@@ -138,9 +172,14 @@ def main(cfg: DictConfig):
 
         best_ngram_tuple = tuple(map(int, best_trial.params["ngram_range"].split(",")))
 
+        if cfg.model.type == "logistic_regression":
+            best_clf = LogisticRegression(C=best_trial.params["C"], max_iter=cfg.model.get("max_iter", 500), random_state=cfg.seed)
+        elif cfg.model.type == "random_forest":
+            best_clf = RandomForestClassifier(n_estimators=best_trial.params["n_estimators"], max_depth=best_trial.params["max_depth"], random_state=cfg.seed, n_jobs=-1)
+
         best_pipeline = Pipeline([
             ("tfidf", TfidfVectorizer(max_features=best_trial.params["max_features"], ngram_range=best_ngram_tuple)),
-            ("clf", LogisticRegression(C=best_trial.params["C"], max_iter=cfg.model.max_iter, random_state=cfg.seed))
+            ("clf", best_clf)
         ])
         
         best_pipeline.fit(X_train_full, y_train_full)

@@ -1,7 +1,7 @@
 schema: '2.0'
 stages:
   prepare:
-    cmd: python src/prepare.py data/raw/dataset.csv data/prepared
+    cmd: uv run src/prepare.py data/raw/dataset.csv data/processed
     deps:
     - path: data/raw/dataset.csv
       hash: md5
@@ -14,8 +14,8 @@ stages:
     outs:
     - path: data/processed
       hash: md5
-      md5: 59ae4f271f1d877e78f590b0e89b7045.dir
-      size: 36250629
+      md5: 55b7b3ca0bf9c4f915a2814b453bdf07.dir
+      size: 36300631
       nfiles: 2
   train:
     cmd: python src/train.py --input_dir data/processed --C 1.0 --max_features 
@@ -34,3 +34,20 @@ stages:
       params.yaml:
         train.C: 1.0
         train.max_features: 5000
+  optimize:
+    cmd: uv run src/optimize.py
+    deps:
+    - path: config/
+      hash: md5
+      md5: 69fd7603ab5d4fed8d8a8d6c5278df54.dir
+      size: 1629
+      nfiles: 6
+    - path: data/processed
+      hash: md5
+      md5: 55b7b3ca0bf9c4f915a2814b453bdf07.dir
+      size: 36300631
+      nfiles: 2
+    - path: src/optimize.py
+      hash: md5
+      md5: 2d192e8772348772d0c0b99165d86e7a
+      size: 8886

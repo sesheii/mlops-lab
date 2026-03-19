@@ -1,17 +1,15 @@
-# stages:
-#   prepare:
-#     cmd: python src/prepare.py data/raw/dataset.csv data/prepared
-#     deps:
-#       - data/raw/dataset.csv
-#       - src/prepare.py
-#     outs:
-#       - data/prepared
+stages:
+  prepare:
+    cmd: uv run src/prepare.py data/raw/dataset.csv data/processed
+    deps:
+      - data/raw/dataset.csv
+      - src/prepare.py
+    outs:
+      - data/processed
 
-#   train:
-#     cmd: python src/train.py --input_dir data/prepared --C ${train.C} --max_features ${train.max_features}
-#     deps:
-#       - data/prepared
-#       - src/train.py
-#     params:
-#       - train.C
-#       - train.max_features
+  optimize:
+    cmd: uv run src/optimize.py
+    deps:
+      - data/processed
+      - src/optimize.py
+      - config/
