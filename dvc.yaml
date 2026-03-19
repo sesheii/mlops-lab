@@ -8,7 +8,7 @@ stages:
       - data/processed
 
   optimize:
-    cmd: uv run src/optimize.py
+    cmd: uv run src/optimize.py 
     deps:
       - data/processed
       - src/optimize.py

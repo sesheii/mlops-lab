@@ -1,0 +1,6 @@
+{
+  "max_features": 12500,
+  "ngram_range": "1,1",
+  "n_estimators": 288,
+  "max_depth": 20
+}

@@ -1,6 +1,6 @@
 defaults:
-  - model: logistic_regression
-  - hpo: optuna
+  - model: random_forest
+  - hpo: random
   - _self_
 
 seed: 42
