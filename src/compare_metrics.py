@@ -1,6 +1,7 @@
 import json
 import os
 
+
 def main():
     baseline_path = "baseline/metrics.json"
     current_path = "reports/metrics.json"
@@ -26,6 +27,7 @@ def main():
 
     with open("reports/comparison_report.md", "w", encoding="utf-8") as f:
         f.write(markdown)
+
 
 if __name__ == "__main__":
     main()
