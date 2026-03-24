@@ -2,7 +2,7 @@ name: Model CI (Train, Test, Report)
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "main" ]
   pull_request:
 
 permissions:
@@ -40,6 +40,10 @@ jobs:
           F1_THRESHOLD: "0.75"
         run: uv run mlflow server --host 127.0.0.1 --port 5000 & uv run dvc repro
 
+      - name: Generate Baseline Comparison (PR only)
+        if: github.event_name == 'pull_request'
+        run: uv run python src/compare_metrics.py
+
       - name: Setup CML
         if: github.event_name == 'pull_request'
         uses: iterative/setup-cml@v2
@@ -49,18 +53,25 @@ jobs:
         env:
           REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "## Model Metrics" > report.md
-          echo "\`\`\`json" >> report.md
-          cat reports/metrics.json >> report.md
-          echo "\`\`\`" >> report.md
-          echo "" >> report.md
+          cat <<EOF > report.md
+          ## Model Metrics
           
-          echo "## Visualization" >> report.md
-          cml publish reports/confusion_matrix.png --md >> report.md
+          \`\`\`json
+          $(cat reports/metrics.json)
+          \`\`\`
           
-          echo "" >> report.md
-          echo "### Quality Gate" >> report.md
-          echo "F1 threshold target: $F1_THRESHOLD" >> report.md
+          ## Visualization
+          $(cml publish reports/confusion_matrix.png --md)
           
-          # Публікуємо звіт як коментар до Pull Request
+          ### Quality Gate
+          F1 threshold target: $F1_THRESHOLD
+          EOF
+          
           cml comment create report.md
+
+      - name: Upload model artifact (main only)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-model
+          path: models/model.pkl
