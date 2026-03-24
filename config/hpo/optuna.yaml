@@ -1,5 +1,5 @@
 sampler: "tpe"
-n_trials: 10
+n_trials: 20
 metric: "f1"
 direction: "maximize"
 

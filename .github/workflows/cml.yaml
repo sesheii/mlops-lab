@@ -38,7 +38,7 @@ jobs:
         env:
           CI: "true"
           F1_THRESHOLD: "0.75"
-        run: uv run dvc repro
+        run: uv run mlflow server --host 127.0.0.1 --port 5000 & uv run dvc repro
 
       - name: Setup CML
         if: github.event_name == 'pull_request'
