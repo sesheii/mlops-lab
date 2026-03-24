@@ -130,11 +130,24 @@ def main(cfg: DictConfig):
     mlflow.set_tracking_uri(cfg.mlflow.tracking_uri)
     mlflow.set_experiment(cfg.mlflow.experiment_name)
 
+    is_ci = os.getenv("CI", "false").lower() == "true"
+
+    if is_ci:
+        n_trials = 2
+        sample_size = 1000
+    else:
+        n_trials = cfg.hpo.n_trials
+        sample_size = None
+
     df_train = pd.read_csv(cfg.data.train_path).dropna()
+    df_test = pd.read_csv(cfg.data.test_path).dropna()
+    if sample_size:
+        df_train = df_train.sample(n=min(sample_size, len(df_train)), random_state=cfg.seed)
+        df_test = df_test.sample(n=min(sample_size // 2, len(df_test)), random_state=cfg.seed)
+
     X_train_full = df_train["cleaned_review"].values
     y_train_full = df_train["target"].values
 
-    df_test = pd.read_csv(cfg.data.test_path).dropna()
     X_test = df_test["cleaned_review"].values
     y_test = df_test["target"].values
 
@@ -167,7 +180,7 @@ def main(cfg: DictConfig):
         study = optuna.create_study(direction=cfg.hpo.direction, sampler=sampler)
         
         objective = objective_factory(cfg, X_train_full, y_train_full)
-        study.optimize(objective, n_trials=cfg.hpo.n_trials)
+        study.optimize(objective, n_trials=n_trials)
 
         best_trial = study.best_trial
 

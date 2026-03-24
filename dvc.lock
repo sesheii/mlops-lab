@@ -49,21 +49,21 @@ stages:
       nfiles: 2
     - path: src/optimize.py
       hash: md5
-      md5: 770ed8aebceb062abd1846672b5b1ab1
-      size: 10062
+      md5: c24ac0de2d1602d62c5ce71462e1bbb6
+      size: 10468
     outs:
     - path: models/model.pkl
       hash: md5
-      md5: 9aad4be731d4d3f2a0e20ba2b5de9fbb
-      size: 2266549
+      md5: 8bf62f77d568058a2166853ec826f814
+      size: 2757861
     - path: reports/confusion_matrix.png
       hash: md5
-      md5: 4b62f21d53e90e3e6c912e43342f9c47
-      size: 18161
+      md5: 1f0b2a6fde7ffda864a95cfd8d0a045c
+      size: 16599
     - path: reports/metrics.json
       hash: md5
-      md5: 6823e9e25b1b7c6d6d020c1e34c6de11
-      size: 55
+      md5: 9f2840461da667bf4832b1f1f12318ce
+      size: 54
   download:
     cmd: uv run src/download.py
     deps:
@@ -93,12 +93,12 @@ stages:
     deps:
     - path: models/model.pkl
       hash: md5
-      md5: 9aad4be731d4d3f2a0e20ba2b5de9fbb
-      size: 2266549
+      md5: 8bf62f77d568058a2166853ec826f814
+      size: 2757861
     - path: reports/metrics.json
       hash: md5
-      md5: 6823e9e25b1b7c6d6d020c1e34c6de11
-      size: 55
+      md5: 9f2840461da667bf4832b1f1f12318ce
+      size: 54
     - path: tests/test_model.py
       hash: md5
       md5: ab9f81a0a461776e9a667e2f8ab3ea2c

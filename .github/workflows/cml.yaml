@@ -1,0 +1,66 @@
+name: Model CI (Train, Test, Report)
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Install dependencies via uv
+        run: |
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          $HOME/.local/bin/uv sync
+
+      - name: Lint (flake8)
+        run: uv run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+      - name: Format check (black)
+        run: uv run black . --check
+
+      - name: Run DVC pipeline (Download, Prepare, Train, Test)
+        env:
+          CI: "true"
+          F1_THRESHOLD: "0.75"
+        run: uv run dvc repro
+
+      - name: Setup CML
+        if: github.event_name == 'pull_request'
+        uses: iterative/setup-cml@v2
+
+      - name: Create CML report (PR only)
+        if: github.event_name == 'pull_request'
+        env:
+          REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "## Model Metrics" > report.md
+          echo "\`\`\`json" >> report.md
+          cat reports/metrics.json >> report.md
+          echo "\`\`\`" >> report.md
+          echo "" >> report.md
+          
+          echo "## Visualization" >> report.md
+          cml publish reports/confusion_matrix.png --md >> report.md
+          
+          echo "" >> report.md
+          echo "### Quality Gate" >> report.md
+          echo "F1 threshold target: $F1_THRESHOLD" >> report.md
+          
+          # Публікуємо звіт як коментар до Pull Request
+          cml comment create report.md
