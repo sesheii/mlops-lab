@@ -4,7 +4,12 @@ venv/
 .env
 models/
 .ipynb_checkpoints
-mlruns/
 mlflow.db
+mlartifacts/
+mlruns/
 .trash/
+model.pkl
+models/
+metrics.json
+confusion_matrix.png
 optimize.log

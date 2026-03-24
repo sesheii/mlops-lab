@@ -1,6 +1,6 @@
 defaults:
   - model: random_forest
-  - hpo: random
+  - hpo: optuna
   - _self_
 
 seed: 42

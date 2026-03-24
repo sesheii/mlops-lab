@@ -13,3 +13,7 @@ stages:
       - data/processed
       - src/optimize.py
       - config/
+    outs:
+      - models/
+      - metrics.json
+      - confusion_matrix.png

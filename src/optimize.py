@@ -13,6 +13,12 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import Pipeline
 from sklearn.base import clone
 import subprocess
+import os
+import json
+import joblib
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import accuracy_score, confusion_matrix
 
 import hydra._internal.utils
 hydra._internal.utils.LazyCompletionHelp = str
@@ -184,9 +190,14 @@ def main(cfg: DictConfig):
         
         best_pipeline.fit(X_train_full, y_train_full)
         y_pred_test = best_pipeline.predict(X_test)
-        final_test_score = f1_score(y_test, y_pred_test)
+        final_test_f1 = f1_score(y_test, y_pred_test)
+        final_test_acc = accuracy_score(y_test, y_pred_test)
         
-        mlflow.log_metric(f"final_test_{cfg.hpo.metric}", final_test_score)
+        mlflow.log_metric(f"final_test_{cfg.hpo.metric}", final_test_f1)
+        mlflow.log_metric("final_test_accuracy", final_test_acc)
+
+        if os.path.exists("pyproject.toml"):
+            mlflow.log_artifact("pyproject.toml")
 
         artifact_path = "model"
         mlflow.sklearn.log_model(best_pipeline, artifact_path)
@@ -205,6 +216,24 @@ def main(cfg: DictConfig):
                 version=mv.version,
                 stage=stage
             )
+
+        joblib.dump(best_pipeline, "model.pkl")
+        metrics_dict = {
+            "accuracy": float(final_test_acc),
+            "f1": float(final_test_f1)
+        }
+        with open("metrics.json", "w", encoding="utf-8") as f:
+            json.dump(metrics_dict, f, ensure_ascii=False, indent=2)
+        
+        cm = confusion_matrix(y_test, y_pred_test)
+        plt.figure(figsize=(6, 5))
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+        plt.title('Confusion Matrix')
+        plt.ylabel('True Label')
+        plt.xlabel('Predicted Label')
+        plt.tight_layout()
+        plt.savefig("confusion_matrix.png")
+        plt.close()
 
 if __name__ == "__main__":
     main()
