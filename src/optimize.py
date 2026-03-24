@@ -216,13 +216,15 @@ def main(cfg: DictConfig):
                 version=mv.version,
                 stage=stage
             )
-
-        joblib.dump(best_pipeline, "model.pkl")
+        
+        os.makedirs("reports", exist_ok=True)
+        os.makedirs("models", exist_ok=True)
+        joblib.dump(best_pipeline, "models/model.pkl")
         metrics_dict = {
             "accuracy": float(final_test_acc),
             "f1": float(final_test_f1)
         }
-        with open("metrics.json", "w", encoding="utf-8") as f:
+        with open("reports/metrics.json", "w", encoding="utf-8") as f:
             json.dump(metrics_dict, f, ensure_ascii=False, indent=2)
         
         cm = confusion_matrix(y_test, y_pred_test)
@@ -232,7 +234,7 @@ def main(cfg: DictConfig):
         plt.ylabel('True Label')
         plt.xlabel('Predicted Label')
         plt.tight_layout()
-        plt.savefig("confusion_matrix.png")
+        plt.savefig("reports/confusion_matrix.png")
         plt.close()
 
 if __name__ == "__main__":

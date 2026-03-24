@@ -1,4 +1,11 @@
 stages:
+  download:
+    cmd: uv run src/download.py
+    deps:
+      - src/download.py
+    outs:
+      - data/raw/dataset.csv
+
   prepare:
     cmd: uv run src/prepare.py data/raw/dataset.csv data/processed
     deps:
@@ -14,6 +21,6 @@ stages:
       - src/optimize.py
       - config/
     outs:
-      - models/
-      - metrics.json
-      - confusion_matrix.png
+      - models/model.pkl
+      - reports/metrics.json
+      - reports/confusion_matrix.png

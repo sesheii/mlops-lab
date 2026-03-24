@@ -8,8 +8,8 @@ mlflow.db
 mlartifacts/
 mlruns/
 .trash/
-model.pkl
 models/
-metrics.json
-confusion_matrix.png
+reports/
 optimize.log
+data/raw/
+data/processed/

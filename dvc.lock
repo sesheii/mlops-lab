@@ -49,5 +49,30 @@ stages:
       nfiles: 2
     - path: src/optimize.py
       hash: md5
-      md5: b847c2327c906d0be5dd0f8be7d0e181
-      size: 9839
+      md5: 770ed8aebceb062abd1846672b5b1ab1
+      size: 10062
+    outs:
+    - path: models/model.pkl
+      hash: md5
+      md5: 43ecfaec31998ef7241a48a78f822c7d
+      size: 42859749
+    - path: reports/confusion_matrix.png
+      hash: md5
+      md5: 1d18021a62535c9a784e313982078c7e
+      size: 18481
+    - path: reports/metrics.json
+      hash: md5
+      md5: 22426db6e9507881ae79c990403afec5
+      size: 55
+  download:
+    cmd: uv run src/download.py
+    deps:
+    - path: src/download.py
+      hash: md5
+      md5: c3b02f2878a78f59fa2609e5e1dd326c
+      size: 417
+    outs:
+    - path: data/raw/dataset.csv
+      hash: md5
+      md5: 308443a50e5c993e7b8a1cdb95750026
+      size: 66212309
