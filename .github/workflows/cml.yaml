@@ -30,7 +30,7 @@ jobs:
           $HOME/.local/bin/uv sync
 
       - name: Lint (flake8)
-        run: uv run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        run: uv run flake8 . --exclude=.venv,venv,mlruns,data --count --select=E9,F63,F7,F82 --show-source --statistics
       - name: Format check (black)
         run: uv run black . --check
 
