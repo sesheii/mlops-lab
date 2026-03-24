@@ -39,8 +39,8 @@ stages:
     deps:
     - path: config/
       hash: md5
-      md5: b57d72a0d97fcb89687cac893c76f49b.dir
-      size: 1623
+      md5: 4b611ee9d098ee038c87667f5f764c1e.dir
+      size: 1622
       nfiles: 6
     - path: data/processed
       hash: md5
@@ -54,15 +54,15 @@ stages:
     outs:
     - path: models/model.pkl
       hash: md5
-      md5: 43ecfaec31998ef7241a48a78f822c7d
-      size: 42859749
+      md5: 9aad4be731d4d3f2a0e20ba2b5de9fbb
+      size: 2266549
     - path: reports/confusion_matrix.png
       hash: md5
-      md5: 1d18021a62535c9a784e313982078c7e
-      size: 18481
+      md5: 4b62f21d53e90e3e6c912e43342f9c47
+      size: 18161
     - path: reports/metrics.json
       hash: md5
-      md5: 22426db6e9507881ae79c990403afec5
+      md5: 6823e9e25b1b7c6d6d020c1e34c6de11
       size: 55
   download:
     cmd: uv run src/download.py
@@ -76,3 +76,30 @@ stages:
       hash: md5
       md5: 308443a50e5c993e7b8a1cdb95750026
       size: 66212309
+  test_data:
+    cmd: uv run pytest tests/test_data.py -v
+    deps:
+    - path: data/processed
+      hash: md5
+      md5: 55b7b3ca0bf9c4f915a2814b453bdf07.dir
+      size: 36300631
+      nfiles: 2
+    - path: tests/test_data.py
+      hash: md5
+      md5: 4ae9754ed43667e5c22c983485eda4fe
+      size: 1610
+  test_model:
+    cmd: uv run pytest tests/test_model.py -v
+    deps:
+    - path: models/model.pkl
+      hash: md5
+      md5: 9aad4be731d4d3f2a0e20ba2b5de9fbb
+      size: 2266549
+    - path: reports/metrics.json
+      hash: md5
+      md5: 6823e9e25b1b7c6d6d020c1e34c6de11
+      size: 55
+    - path: tests/test_model.py
+      hash: md5
+      md5: ab9f81a0a461776e9a667e2f8ab3ea2c
+      size: 1029

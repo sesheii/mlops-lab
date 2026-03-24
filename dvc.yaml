@@ -14,6 +14,12 @@ stages:
     outs:
       - data/processed
 
+  test_data:
+    cmd: uv run pytest tests/test_data.py -v
+    deps:
+      - data/processed
+      - tests/test_data.py
+
   optimize:
     cmd: uv run src/optimize.py 
     deps:
@@ -24,3 +30,10 @@ stages:
       - models/model.pkl
       - reports/metrics.json
       - reports/confusion_matrix.png
+
+  test_model:
+    cmd: uv run pytest tests/test_model.py -v
+    deps:
+      - models/model.pkl
+      - reports/metrics.json
+      - tests/test_model.py
