@@ -31,4 +31,5 @@ def test_target_classes():
     unique_classes = df_train["target"].nunique()
     assert unique_classes == 2, f"Очікувалось 2 класи у 'target', але знайдено: {unique_classes}"
     
+    class_counts = df_train["target"].value_counts(normalize=True)
     assert class_counts.min() > 0.1, "Сильний дисбаланс класів (менше 10% для одного з класів)"
