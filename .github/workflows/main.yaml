@@ -44,7 +44,7 @@ jobs:
               unittest.main()
           EOF
           
-          uv run --with apache-airflow --with apache-airflow-providers-docker --with docker python test_dag_integrity.py
+          uv run --with "apache-airflow==2.8.1" --with "apache-airflow-providers-docker" --with docker python test_dag_integrity.py
 
       # 3. Docker Build: Перевірка збірки образу
       - name: Build Docker image
