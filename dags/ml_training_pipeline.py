@@ -5,8 +5,10 @@ from airflow.operators.empty import EmptyOperator
 from datetime import datetime, timedelta
 from docker.types import Mount
 import os
+import json
 
 HOST_PROJECT_PATH = os.getenv("HOST_PROJECT_PATH", "D:/repos/mlops_lab_1")
+ACCURACY_THRESHOLD = 0.8
 
 default_args = {
     "owner": "airflow",
