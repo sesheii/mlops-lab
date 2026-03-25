@@ -49,33 +49,39 @@ stages:
       nfiles: 2
     - path: src/optimize.py
       hash: md5
-      md5: c24ac0de2d1602d62c5ce71462e1bbb6
-      size: 10468
+      md5: 9aeb9b56d180261f08b30c4661006edb
+      size: 11221
+      isexec: true
     outs:
     - path: models/model.pkl
       hash: md5
-      md5: 8bf62f77d568058a2166853ec826f814
-      size: 2757861
+      md5: c0e4774faa5636ffc449cd6de9eaea3b
+      size: 2266597
+      isexec: true
     - path: reports/confusion_matrix.png
       hash: md5
-      md5: 1f0b2a6fde7ffda864a95cfd8d0a045c
-      size: 16599
+      md5: ea614a93808fac1aea29aacee36c2901
+      size: 19828
+      isexec: true
     - path: reports/metrics.json
       hash: md5
-      md5: 9f2840461da667bf4832b1f1f12318ce
-      size: 54
+      md5: a72b6459b4ad012d7f7f01e60e3c7687
+      size: 52
+      isexec: true
   download:
     cmd: uv run src/download.py
     deps:
     - path: src/download.py
       hash: md5
-      md5: c3b02f2878a78f59fa2609e5e1dd326c
-      size: 417
+      md5: e71657cd3d050ee627b6b53980fa8c6c
+      size: 427
+      isexec: true
     outs:
     - path: data/raw/dataset.csv
       hash: md5
       md5: 308443a50e5c993e7b8a1cdb95750026
       size: 66212309
+      isexec: true
   test_data:
     cmd: uv run pytest tests/test_data.py -v
     deps:

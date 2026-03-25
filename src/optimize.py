@@ -156,7 +156,9 @@ def objective_factory(cfg: DictConfig, X, y):
 def main(cfg: DictConfig):
     set_global_seed(cfg.seed)
 
-    mlflow.set_tracking_uri(cfg.mlflow.tracking_uri)
+    tracking_uri = os.getenv("MLFLOW_TRACKING_URI", cfg.mlflow.tracking_uri)
+    
+    mlflow.set_tracking_uri(tracking_uri)
     mlflow.set_experiment(cfg.mlflow.experiment_name)
 
     is_ci = os.getenv("CI", "false").lower() == "true"
@@ -267,7 +269,7 @@ def main(cfg: DictConfig):
             mlflow.log_artifact("pyproject.toml")
 
         artifact_path = "model"
-        mlflow.sklearn.log_model(best_pipeline, artifact_path)
+        mlflow.sklearn.log_model(sk_model=best_pipeline, artifact_path="model", registered_model_name="IMDB_RF_Model")
 
         if cfg.mlflow.get("register_model", False):
             model_uri = f"runs:/{parent_run.info.run_id}/{artifact_path}"

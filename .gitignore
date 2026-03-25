@@ -2,6 +2,7 @@ __pycache__/
 *.py[cod]
 venv/
 .venv/
+logs
 .env
 models/
 .ipynb_checkpoints

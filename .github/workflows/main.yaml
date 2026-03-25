@@ -1,0 +1,52 @@
+name: MLOps CI (Lint, DAG, Docker)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv and dependencies
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          uv sync --dev
+
+      - name: Lint with flake8
+        run: |
+          uv run flake8 . --exclude=.venv,venv,mlruns,data --count --select=E9,F63,F7,F82 --show-source --statistics
+          uv run flake8 . --exclude=.venv,venv,mlruns,data --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Run DAG Integrity Test
+        run: |
+          # Створюємо швидкий тест "на льоту"
+          cat <<EOF > test_dag_integrity.py
+          from airflow.models import DagBag
+          import unittest
+
+          class TestDagIntegrity(unittest.TestCase):
+              def test_dagbag_import_errors(self):
+                  dagbag = DagBag(dag_folder='dags/', include_examples=False)
+                  self.assertEqual(len(dagbag.import_errors), 0, f"DAG import errors: {dagbag.import_errors}")
+
+          if __name__ == "__main__":
+              unittest.main()
+          EOF
+          uv run python test_dag_integrity.py
+
+      # 3. Docker Build: Перевірка збірки образу
+      - name: Build Docker image
+        run: |
+          docker build -t mlops-lab-model:test .

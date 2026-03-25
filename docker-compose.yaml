@@ -1,0 +1,77 @@
+networks:
+  default:
+    name: mlops-network
+
+x-airflow-common:
+  &airflow-common
+  image: apache/airflow:2.8.1
+  user: root
+  environment:
+    - HOST_PROJECT_PATH=${HOST_PROJECT_PATH}
+    - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+    - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+    - AIRFLOW__CORE__LOAD_EXAMPLES=False
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./logs:/opt/airflow/logs
+    - /var/run/docker.sock:/var/run/docker.sock
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:13-alpine
+    environment:
+      - HOST_PROJECT_PATH=${HOST_PROJECT_PATH}
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      retries: 5
+
+  airflow-init:
+    <<: *airflow-common
+    command: version
+    environment:
+      - HOST_PROJECT_PATH=${HOST_PROJECT_PATH}
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - _AIRFLOW_DB_UPGRADE=True
+      - _AIRFLOW_WWW_USER_CREATE=True
+      - _AIRFLOW_WWW_USER_USERNAME=admin
+      - _AIRFLOW_WWW_USER_PASSWORD=admin
+
+  airflow-webserver:
+    <<: *airflow-common
+    command: webserver
+    ports:
+      - "8080:8080"
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  mlflow-server:
+      image: ghcr.io/mlflow/mlflow:v3.10.1
+      ports:
+        - "5000:5000"
+      environment:
+        - MLFLOW_HTTP_WHITELIST=any
+      volumes:
+        - ./mlruns:/mlflow/mlruns
+      command: >
+        mlflow server 
+        --backend-store-uri sqlite:///mlflow.db 
+        --default-artifact-root /mlflow/mlruns 
+        --host 0.0.0.0
+        --allowed-hosts "*"
+      networks:
+      - default
