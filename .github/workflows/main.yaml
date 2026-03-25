@@ -31,7 +31,6 @@ jobs:
 
       - name: Run DAG Integrity Test
         run: |
-          # Створюємо швидкий тест "на льоту"
           cat <<EOF > test_dag_integrity.py
           from airflow.models import DagBag
           import unittest
@@ -44,7 +43,8 @@ jobs:
           if __name__ == "__main__":
               unittest.main()
           EOF
-          uv run python test_dag_integrity.py
+          
+          uv run --with apache-airflow --with apache-airflow-providers-docker --with docker python test_dag_integrity.py
 
       # 3. Docker Build: Перевірка збірки образу
       - name: Build Docker image
