@@ -96,8 +96,11 @@ with DAG(
 
     register_model = DockerOperator(
         task_id="register_model",
-        command="mlflow models register -m 'models:/IMDB_RF_Model/latest' -n IMDB_Production_Model",
-        environment={"MLFLOW_TRACKING_URI": "http://mlflow-server:5000"},
+        command="uv run src/register_model.py",
+        environment={
+            "MLFLOW_TRACKING_URI": "http://mlflow-server:5000",
+            "UV_LINK_MODE": "copy",
+        },
         **docker_kwargs,
     )
 
